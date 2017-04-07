@@ -105,7 +105,6 @@ public class YouKnowJustARandomThingManGetOutOfMyFace {
   }
 
   private static void spamPerc() {
-    HashSet<PercentEntry<String>> test = new HashSet<>();
     HashSet<String> actualfuckingthing = new HashSet<>();
     actualfuckingthing.addAll(regularPercents.keySet());
     actualfuckingthing.addAll(spamPercents.keySet());
