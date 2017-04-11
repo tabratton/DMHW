@@ -1,0 +1,3 @@
+Match string for splitting: (?:(?:\s+|(?:(?<=\w)\p{P}(?=\s))|((?<=\s)\p{P}(?=\w)))+)
+Match words: (?<=\s|^|\b)(?:(?:(?:\w|\p{P})*\W?))(?=\s|$)
+Match spaced out words: (?<=\s|^)((?:\w\s|\w\.)+)
