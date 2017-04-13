@@ -6,8 +6,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Scanner;
 import java.util.Set;
-import java.util.StringTokenizer;
-
 
 public class YouKnowJustARandomThingManGetOutOfMyFace {
   private static ArrayList<CountEntry<String>> regularCountEntryList = new ArrayList<>();
@@ -47,21 +45,24 @@ public class YouKnowJustARandomThingManGetOutOfMyFace {
 
   private static void parseFile(File file) throws FileNotFoundException {
     Scanner scanner = new Scanner(file);
-    String line;
+    StringBuilder sb = new StringBuilder(1000);
     while (scanner.hasNext()) {
-      line = scanner.nextLine();
-      StringTokenizer st = new StringTokenizer(line, " .\t\n\r\f");
-      while (st.hasMoreTokens()) {
-        String word = st.nextToken().toLowerCase();
-        if (file.getName().contains("sp")) {
-          addToMap(word, spamCounts);
-          spamTotalWords++;
-        } else {
-          addToMap(word, regularCounts);
-          regularTotalWords++;
-        }
+      sb.append(scanner.nextLine());
+    }
+
+    String[] tokens = sb.toString().split("(?:(?:\\s+|(?:(?<=\\w)\\p{P}"
+        + "(?=\\s))|((?<=\\s)\\p{P}(?=\\w)))+)");
+
+    for (String token : tokens) {
+      if (file.getName().contains("sp")) {
+        addToMap(token, spamCounts);
+        spamTotalWords++;
+      } else {
+        addToMap(token, regularCounts);
+        regularTotalWords++;
       }
     }
+
   }
 
   private static void addToMap(String word, HashMap<String, Integer> hashMap) {
@@ -93,7 +94,7 @@ public class YouKnowJustARandomThingManGetOutOfMyFace {
   private static void count(HashMap<String, Integer> source,
                             ArrayList<CountEntry<String>> dest) {
     for (String word : source.keySet()) {
-      CountEntry countEntry = new CountEntry(word, source.get(word));
+      CountEntry<String> countEntry = new CountEntry<>(word, source.get(word));
       dest.add(countEntry);
     }
     Collections.sort(dest);
