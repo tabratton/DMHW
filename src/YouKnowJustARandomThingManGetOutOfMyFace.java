@@ -16,23 +16,36 @@ public class YouKnowJustARandomThingManGetOutOfMyFace {
   private static HashMap<String, Double> spamPercents = new HashMap<>();
   private static HashMap<String, Integer> regularCounts = new HashMap<>();
   private static HashMap<String, Integer> spamCounts = new HashMap<>();
+  private static HashSet<String> allWords = new HashSet<>();
+  private static double trainingSpamFileCount = 0;
+  private static double trainingRegFileCount = 0;
   private static int spamTotalWords = 0;
   private static int regularTotalWords = 0;
   private static final int TOP_N = 10;
+  private static double numTestSpam = 0.0;
+  private static double numTestReg = 0.0;
+  private static double numSpamCorrect = 0.0;
+  private static double numRegularCorrect = 0.0;
+  private static double numSpamClassified = 0.0;
+  private static double numRegClassified = 0.0;
+  private static double numSpamWrong = 0.0;
+  private static double numRegWrong = 0.0;
 
   public static void main(String[] args) throws FileNotFoundException {
     File trainingPath = new File(System.getProperty("user.dir")
-        + "\\train");
+        + File.separator + "train");
+    File testPath = new File(System.getProperty("user.dir") + File.separator
+        + "test");
     System.out.println(System.getProperty("user.dir"));
     File[] files = trainingPath.listFiles();
 
     for (File file : files) {
-      parseFile(file);
+      parseFile(file, "train");
     }
 
     addPercents();
-    printResults(regularCounts);
-    printResults(spamCounts);
+//    printResults(regularCounts);
+//    printResults(spamCounts);
     System.out.println("Regular emails word total: " + regularCounts.size());
     System.out.println("Spam emails word total: " + spamCounts.size());
     System.out.printf("Top %d words in regular emails: %n", TOP_N);
@@ -41,9 +54,44 @@ public class YouKnowJustARandomThingManGetOutOfMyFace {
     count(spamCounts, spamCountEntryList);
     System.out.printf("Top %d words by spam percent: %n", TOP_N);
     spamPerc();
+
+    files = testPath.listFiles();
+    for (File file : files) {
+      parseFile(file, "test");
+    }
+
+    showBayes();
   }
 
-  private static void parseFile(File file) throws FileNotFoundException {
+  private static void showBayes() {
+    System.out.println("SpamClassified: " + numSpamClassified);
+    System.out.println("SpamCorrect: " + numSpamCorrect);
+    System.out.println("SpamWrong: " + numSpamWrong);
+    System.out.println("RegClassified: " + numRegClassified);
+    System.out.println("RegCorrect: " + numRegularCorrect);
+    System.out.println("RegWrong: " + numRegWrong);
+  }
+
+  private static char naiveBayes(String[] words) {
+    double probabilities = 0.0;
+
+    for (String word : words) {
+      Integer spamCount = spamCounts.get(word);
+      Integer regCount = regularCounts.get(word);
+      double spamFreq = spamCount != null ? spamCount : 0.5;
+      double regFreq = regCount != null ? regCount : 0.5;
+      probabilities += Math.log(spamFreq / regFreq);
+    }
+
+    double totalTraining = trainingRegFileCount + trainingSpamFileCount;
+    double probSpam = trainingSpamFileCount / totalTraining;
+    double probHam = trainingRegFileCount / totalTraining;
+    probabilities += Math.log(probSpam / probHam);
+    return probabilities > 0 ? 's' : 'r';
+  }
+
+  private static void parseFile(File file, String data) throws
+      FileNotFoundException {
     Scanner scanner = new Scanner(file);
     StringBuilder sb = new StringBuilder(1000);
     while (scanner.hasNext()) {
@@ -53,16 +101,42 @@ public class YouKnowJustARandomThingManGetOutOfMyFace {
     String[] tokens = sb.toString().split("(?:(?:\\s+|(?:(?<=\\w)\\p{P}"
         + "(?=\\s))|((?<=\\s)\\p{P}(?=\\w)))+)");
 
-    for (String token : tokens) {
+    if (data.equals("train")) {
       if (file.getName().contains("sp")) {
-        addToMap(token, spamCounts);
-        spamTotalWords++;
+        trainingSpamFileCount++;
       } else {
-        addToMap(token, regularCounts);
-        regularTotalWords++;
+        trainingRegFileCount++;
       }
+      for (String token : tokens) {
+        if (file.getName().contains("sp")) {
+          addToMap(token, spamCounts);
+          spamTotalWords++;
+        } else {
+          addToMap(token, regularCounts);
+          regularTotalWords++;
+        }
+      }
+    } else if (data.equals("test")){
+      char bayesResult = naiveBayes(tokens);
+      if (file.getName().contains("sp") && (bayesResult == 's')) {
+        numTestSpam++;
+        numSpamClassified++;
+        numSpamCorrect++;
+      } else if (file.getName().contains("sp") && (bayesResult == 'r')) {
+        numTestSpam++;
+        numRegWrong++;
+        numRegClassified++;
+      } else if (!file.getName().contains("sp") && (bayesResult == 's')) {
+        numTestReg++;
+        numSpamWrong++;
+        numSpamClassified++;
+      } else if (!file.getName().contains("sp") && (bayesResult == 'r')) {
+        numTestReg++;
+        numRegClassified++;
+        numRegularCorrect++;
+      }
+      // knn
     }
-
   }
 
   private static void addToMap(String word, HashMap<String, Integer> hashMap) {
@@ -71,6 +145,7 @@ public class YouKnowJustARandomThingManGetOutOfMyFace {
     } else {
       hashMap.put(word, 1);
     }
+    allWords.add(word);
   }
 
   private static void addPercents() {
