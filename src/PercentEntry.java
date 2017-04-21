@@ -1,12 +1,10 @@
 public class PercentEntry<T> implements Comparable<PercentEntry<T>> {
   public T word;
-  public double regPerc;
-  public double spamPerc;
+  public double totalProbability;
 
   public PercentEntry(T word, double regPerc, double spamPerc) {
     this.word = word;
-    this.regPerc = regPerc;
-    this.spamPerc = spamPerc;
+    this.totalProbability = regPerc + spamPerc;
   }
 
   public int compareTo(PercentEntry<T> percentEntry) {
@@ -15,9 +13,9 @@ public class PercentEntry<T> implements Comparable<PercentEntry<T>> {
     // is less than.
     // This is done to give us descending order instead of ascending order
     // when we use Collections.sort.
-    if (this.spamPerc == percentEntry.spamPerc) {
+    if (this.totalProbability == percentEntry.totalProbability) {
       return 0;
-    } else if (this.spamPerc < percentEntry.spamPerc) {
+    } else if (this.totalProbability < percentEntry.totalProbability) {
       return -1;
     } else {
       return 1;
